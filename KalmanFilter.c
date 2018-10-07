@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <math.h>
 #include "KalmanFilterTypes.h"
@@ -9,15 +10,14 @@ int main()
 	int iVal;
 	int iRow;
 	int iCol;
-	float measurementsXvel[NUM_VALS];					// Artificial Measurement values, x direction
-	float measurementsYvel[NUM_VALS];					// Artificial Measurement values, y direction
+	float measurementsVel[2][NUM_VALS];					// Artificial Measurement values. Index 1: x direction, Index 2: y direction
 	int dt;												// Timestep
 	
 	for (iVal = 0; iVal < NUM_VALS; iVal++)
 	{
-		measurementsXvel[iVal] = ((float)rand()) / ((float)RAND_MAX);
-		measurementsYvel[iVal] = 0;
-		// fprintf(stderr, "%f\t\t", measurementsXvel[iVal]);
+		measurementsVel[0][iVal] = (((float)rand()) / ((float)RAND_MAX) * 6) + 7;
+		measurementsVel[1][iVal] = 0;
+		// fprintf(stderr, "%f\t\t", measurementsVel[0][iVal]);
 	}
 	
 	dt = 1;
@@ -61,36 +61,34 @@ int main()
 	{
 		// Prediction
 		// x = A*x
-		for (iRow = 0; iRow < 4; iRow++)
-		{
-			float sumProdAx = 0;
-			for (iCol = 0; iCol < 4; iCol++)
-			{
-				sumProdAx += A[iRow][iCol] * x[iCol];
-			}
-			x[iRow] = sumProdAx;
-		}
+				
+		multiplyMatrixWithVector(4, 4, A, x);
 		
-		// TODO P = A*P*A'+Q
+		// P = A*P*A'+Q
 		
 		float AP[4][4] = {0};
-		SHOWARRAY(AP)
-		multiplyMatrix(4, A, P, AP); 
-		SHOWARRAY(AP)
+		multiplyMatrix(4, A, P, AP);
 		
-		// test transposeMatrix
-		float X[4][4] = {0};
-		printf("\n");
-		printf("\n");
-		SHOWARRAY(Q)
-		transposeMatrix(4,4,Q,X);
-		printf("\n");
-		SHOWARRAY(X)
+		float At[4][4] = {0};
+		transposeMatrix(4,4,A,At);
+		
+		float APAt[4][4] = {0};
+		multiplyMatrix(4, AP, At, APAt);
+		
+		addMatrix(4,4,APAt,Q,P);
+		
+		SHOWARRAY(P);
 		
 		// TODO Correction
+		iVal=0;
+		float Z[2];
+		Z[0] = measurementsVel[0][iVal];
+		Z[1] = measurementsVel[1][iVal];
+		printf("\n");		
 		
-		// Z=measurements(:,n);
-		// y=Z-(H*x);              % Innovation aus Messwertdifferenz
+		// TODO
+		
+		// y = Z - (H * x);              % Innovation aus Messwertdifferenz
 		// S=(H*P*H'+R);           % Innovationskovarianz
 		// K=P*H'*inv(S);          % Filter-Matrix (Kalman-Gain)
 	  
@@ -127,12 +125,38 @@ void multiplyMatrix(int N, float mat1[][N], float mat2[][N], float res[][N])
     } 
 } 
 
+void multiplyMatrixWithVector(int max1, int max2, float matrix[max1][max2],  float vector[max2]) 
+{ 
+	int iRow, iCol;
+	for (iRow = 0; iRow < max1; iRow++)
+	{
+		float sumProdMV = 0;
+		for (iCol = 0; iCol < max2; iCol++)
+		{
+			sumProdMV += matrix[iRow][iCol] * vector[iCol];
+		}
+		vector[iRow] = sumProdMV;
+	} 
+} 
+
 void transposeMatrix(int max1, int max2, float matrix1[max1][max2],  float matrix2[max1][max2])
 {
 	int i, j;
 	for (i = 0; i < max1; i++)
 	{
 		for (j = 0; j < max2; j++)
-			matrix2[j][i] = matrix1[i][j];
+			matrix2[i][j] = matrix1[j][i];
+	}
+}
+
+void addMatrix(int max1, int max2, float matrix1[max1][max2],  float matrix2[max1][max2], float sum[max1][max2])
+{
+	int i, j;
+	for (i = 0; i < max1; i++) 
+	{
+		for (j = 0 ; j < max2; j++) 
+		{
+			 sum[i][j] = matrix1[i][j] + matrix2[i][j];
+		}
 	}
 }
