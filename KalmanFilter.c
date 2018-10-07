@@ -17,7 +17,7 @@ int main()
 	{
 		measurementsXvel[iVal] = ((float)rand()) / ((float)RAND_MAX);
 		measurementsYvel[iVal] = 0;
-		fprintf(stderr, "After Pre: %f\t", measurementsXvel[iVal]);
+		// fprintf(stderr, "%f\t\t", measurementsXvel[iVal]);
 	}
 	
 	dt = 1;
@@ -73,6 +73,20 @@ int main()
 		
 		// TODO P = A*P*A'+Q
 		
+		float AP[4][4] = {0};
+		SHOWARRAY(AP)
+		multiplyMatrix(4, A, P, AP); 
+		SHOWARRAY(AP)
+		
+		// test transposeMatrix
+		float X[4][4] = {0};
+		printf("\n");
+		printf("\n");
+		SHOWARRAY(Q)
+		transposeMatrix(4,4,Q,X);
+		printf("\n");
+		SHOWARRAY(X)
+		
 		// TODO Correction
 		
 		// Z=measurements(:,n);
@@ -87,30 +101,6 @@ int main()
 	
 	return 0;
 }
-
-GaussType Predict(GaussType* val1, GaussType* val2)
-{
-	GaussType valNew;
-	
-	valNew.mean = val1->mean + val2->mean;
-	valNew.variance = val1->variance + val2->variance;
-	
-	return valNew;				 
-}
-
-GaussType Update(GaussType* val1, GaussType* val2)
-{
-	GaussType valNew;
-	
-	valNew.mean = ((val2->variance * val1->mean)
-				 + (val1->variance * val2->mean))
-				 / ((val1->variance + val2->variance));
-				 
-	valNew.variance = 1 / ((1/val1->variance) + (1/val2->variance));
-	
-	return valNew;				 
-}
-
 void showFloatArray(int max1, int max2, float array[max1][max2])
 {
 	int i;
@@ -120,5 +110,29 @@ void showFloatArray(int max1, int max2, float array[max1][max2])
 		for (j = 0; j < max2; j++)
 			printf("%f\t", array[i][j]);
 		printf("\n");
+	}
+}
+
+void multiplyMatrix(int N, float mat1[][N], float mat2[][N], float res[][N]) 
+{ 
+    int i, j, k; 
+    for (i = 0; i < N; i++) 
+    { 
+        for (j = 0; j < N; j++) 
+        { 
+            res[i][j] = 0; 
+            for (k = 0; k < N; k++) 
+                res[i][j] += mat1[i][k]*mat2[k][j]; 
+        } 
+    } 
+} 
+
+void transposeMatrix(int max1, int max2, float matrix1[max1][max2],  float matrix2[max1][max2])
+{
+	int i, j;
+	for (i = 0; i < max1; i++)
+	{
+		for (j = 0; j < max2; j++)
+			matrix2[j][i] = matrix1[i][j];
 	}
 }
