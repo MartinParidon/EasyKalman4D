@@ -58,37 +58,50 @@ int main()
 	
 	
 	// for (iVal = 0; iVal < NUM_VALS; iVal++)
+	iVal=0;
 	{
 		// Prediction
 		// x = A*x
-				
-		multiplyMatrixWithVector(4, 4, A, x);
+		multiplyMatrixWithVector(4, 4, A, x, x);
 		
 		// P = A*P*A'+Q
-		
 		float AP[4][4] = {0};
-		multiplyMatrix(4, A, P, AP);
-		
+		multiplyMatrixNN(4, A, P, AP);
 		float At[4][4] = {0};
 		transposeMatrix(4,4,A,At);
-		
 		float APAt[4][4] = {0};
-		multiplyMatrix(4, AP, At, APAt);
-		
+		multiplyMatrixNN(4, AP, At, APAt);
 		addMatrix(4,4,APAt,Q,P);
 		
-		SHOWARRAY(P);
-		
-		// TODO Correction
-		iVal=0;
+		// y = Z-(H*x)
 		float Z[2];
 		Z[0] = measurementsVel[0][iVal];
 		Z[1] = measurementsVel[1][iVal];
-		printf("\n");		
+		float Hx[2] = {0};
+		multiplyMatrixWithVector(2, 4, H, x, Hx);
+		float y[2] = {0};
+		subtractVector(2, Z, Hx, y);
 		
-		// TODO
+		// S=(H*P*H'+R)
+		float HP[2][4] = {0};
+		multiplyMatrixNN(4, H, P, HP);
+		float Ht[4][2] = {0};
+		transposeMatrix(2, 4, H, Ht);
+		float HPHt[2][2] = {0};
+		multiplyMatrixNM(2, 4, HP, Ht, HPHt);
+		float S[2][2] = {0};
+		addMatrix(2,2,HPHt,R,S);
 		
-		// y = Z - (H * x);              % Innovation aus Messwertdifferenz
+		// DOES NOT WORK YET
+		float PHt[4][2] = {0};
+		multiplyMatrixNM(4, 2, P, Ht, PHt);
+		SHOWFLOATMATRIX(PHt)
+		
+		// WORKS
+		float Si[2][2] = {0};
+		float deter = (float) det(S,2);
+		inverse(S,Si,2,deter);
+		
 		// S=(H*P*H'+R);           % Innovationskovarianz
 		// K=P*H'*inv(S);          % Filter-Matrix (Kalman-Gain)
 	  
@@ -99,7 +112,8 @@ int main()
 	
 	return 0;
 }
-void showFloatArray(int max1, int max2, float array[max1][max2])
+
+void showFloatMatrix(int max1, int max2, float array[max1][max2])
 {
 	int i;
 	int j;
@@ -111,7 +125,17 @@ void showFloatArray(int max1, int max2, float array[max1][max2])
 	}
 }
 
-void multiplyMatrix(int N, float mat1[][N], float mat2[][N], float res[][N]) 
+void showFloatArray(int num, float array[])
+{
+	int i;
+	for (i = 0; i < num; i++)
+	{
+		printf("%f\t", array[i]);
+	}
+	printf("\n");
+}
+
+void multiplyMatrixNN(int N, float mat1[][N], float mat2[][N], float res[][N]) 
 { 
     int i, j, k; 
     for (i = 0; i < N; i++) 
@@ -125,7 +149,21 @@ void multiplyMatrix(int N, float mat1[][N], float mat2[][N], float res[][N])
     } 
 } 
 
-void multiplyMatrixWithVector(int max1, int max2, float matrix[max1][max2],  float vector[max2]) 
+void multiplyMatrixNM(int N, int M, float mat1[N][M], float mat2[M][N], float res[N][N]) 
+{ 
+    int i, j, k; 
+    for (i = 0; i < N; i++) 
+    { 
+        for (j = 0; j < N; j++) 
+        { 
+            res[i][j] = 0; 
+            for (k = 0; k < M; k++) 
+                res[i][j] += mat1[i][k]*mat2[k][j]; 
+        } 
+    } 
+} 
+
+void multiplyMatrixWithVector(int max1, int max2, float matrix[max1][max2],  float vectorIn[max2], float vectorOut[max2]) 
 { 
 	int iRow, iCol;
 	for (iRow = 0; iRow < max1; iRow++)
@@ -133,19 +171,19 @@ void multiplyMatrixWithVector(int max1, int max2, float matrix[max1][max2],  flo
 		float sumProdMV = 0;
 		for (iCol = 0; iCol < max2; iCol++)
 		{
-			sumProdMV += matrix[iRow][iCol] * vector[iCol];
+			sumProdMV += matrix[iRow][iCol] * vectorIn[iCol];
 		}
-		vector[iRow] = sumProdMV;
+		vectorOut[iRow] = sumProdMV;
 	} 
 } 
 
-void transposeMatrix(int max1, int max2, float matrix1[max1][max2],  float matrix2[max1][max2])
+void transposeMatrix(int max1, int max2, float matrix1[max1][max2],  float matrix2[max2][max1])
 {
 	int i, j;
 	for (i = 0; i < max1; i++)
 	{
 		for (j = 0; j < max2; j++)
-			matrix2[i][j] = matrix1[j][i];
+			matrix2[j][i] = matrix1[i][j];
 	}
 }
 
@@ -160,3 +198,106 @@ void addMatrix(int max1, int max2, float matrix1[max1][max2],  float matrix2[max
 		}
 	}
 }
+
+void subtractVector(int num, float vector1[num], float vector2[num], float erg[num])
+{
+	int i;
+	for (i = 0; i < num; i++) 
+	{
+		erg[i] = vector1[i] - vector2[i];
+	}
+}
+
+// NOT TESTED
+// void subtractMatrix(int max1, int max2, float matrix1[max1][max2],  float matrix2[max1][max2], float subtr[max1][max2])
+// {
+	// int i, j;
+	// for (i = 0; i < max1; i++) 
+	// {
+		// for (j = 0 ; j < max2; j++) 
+		// {
+			 // subtr[i][j] = matrix1[i][j] - matrix2[i][j];
+		// }
+	// }
+// }
+
+
+// INVERSE FUNCTIONS ONLY FOR 2*2
+// https://github.com/md-amanalikhani/Inverse-matrix/blob/master/Inverse-matrix.c
+
+//	calculate cofactor of matrix
+void cofactor(float a[2][2],float d[2][2],float n,float determinte){
+	float b[2][2],c[2][2];
+	int l,h,m,k,i,j;
+	for (h=0;h<n;h++)
+		for (l=0;l<n;l++){
+			m=0;
+			k=0;
+			for (i=0;i<n;i++)
+				for (j=0;j<n;j++)
+					if (i != h && j != l){
+						b[m][k]=a[i][j];
+						if (k<(n-2))
+							k++;
+						else{
+							k=0;
+							m++;
+						}
+					}
+			c[h][l] = pow(-1,(h+l))*det(b,(n-1));	// c = cofactor Matrix
+		}
+	transpose(c,d,n,determinte);	// read function
+}// end function
+
+void inverse(float a[2][2],float d[2][2],int n,float det){
+	if(det == 0)
+		printf("\nInverse of Entered Matrix is not possible\n");
+	else if(n == 1)
+		d[0][0] = 1;
+	else
+		cofactor(a,d,n,det);	// read function
+}// end function
+
+//	calculate determinte of matrix
+float det(float a[2][2],int n){
+	int i;
+	float b[2][2],sum=0;
+	if (n == 1)
+return a[0][0];
+	else if(n == 2)
+return (a[0][0]*a[1][1]-a[0][1]*a[1][0]);
+	else
+		for(i=0;i<n;i++){
+			minor(b,a,i,n);	// read function
+			sum = (float) (sum+a[0][i]*pow(-1,i)*det(b,(n-1)));	// read function	// sum = determinte matrix
+		}
+return sum;
+}// end function
+
+//	calculate transpose of matrix
+void transpose(float c[2][2],float d[2][2],float n,float det){
+	int i,j;
+	float b[2][2];
+	for (i=0;i<n;i++)
+		for (j=0;j<n;j++)
+			b[i][j] = c[j][i];
+	for (i=0;i<n;i++)
+		for (j=0;j<n;j++)
+			d[i][j] = b[i][j]/det;	// array d[][] = inverse matrix
+}// end function
+
+//	calculate minor of matrix OR build new matrix : k-had = minor
+void minor(float b[2][2],float a[2][2],int i,int n){
+	int j,l,h=0,k=0;
+	for(l=1;l<n;l++)
+		for( j=0;j<n;j++){
+			if(j == i)
+				continue;
+			b[h][k] = a[l][j];
+			k++;
+			if(k == (n-1)){
+				h++;
+				k=0;
+			}
+		}
+}// end function
