@@ -1,4 +1,4 @@
-KalmanFilter: KalmanFilter.c KalmanFilter.h KalmanFilter.h
+KalmanFilter: KalmanFilter.c KalmanFilter.h
 	gcc -o KalmanFilter KalmanFilter.c
 	
 clean :
