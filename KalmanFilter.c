@@ -2,7 +2,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
-#include "KalmanFilterTypes.h"
 #include "KalmanFilter.h"
 
 int main()
