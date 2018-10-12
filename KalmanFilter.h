@@ -40,7 +40,56 @@ void minor(float b[2][2],float a[2][2],int i,int n);
 
 #define NUM_VALS 100
 
+#define PRINTFLOAT(val) printf("%f\n", val);
 
+#define PRINTINT(val) printf("%d\n", val);
+
+#define PRINTSTRING(val) printf("%s\n", val);
+
+#define PRINTRETURN printf("\n");
+
+#define PRINTTAB printf("\t");
+
+#define SIZEOFARRAY(arr) sizeof(arr)/sizeof(arr[0])
+
+#define WRITEFLOATTOFILE(f, val) fprintf(f, "%f\n", val);
+
+#define WRITEFLOATARRAYTOFILE(f, arr) int i; for ( i= 0; i < SIZEOFARRAY(arr); i++) fprintf(f, "%f\n", arr[i]);
+
+#define WRITEFLOATARRAYTOFILETAB(f, arr) int i; for ( i= 0; i < SIZEOFARRAY(arr); i++) fprintf(f, "%f\t", arr[i]);
+
+#define WRITEENTERTOFILE(f) fprintf(f, "\n");
+
+// ftp://ftp.taygeta.com/pub/c/boxmuller.c
+#define RANDOMNUMBER01 (((float)rand()) / ((float)RAND_MAX))         /* RANDOMNUMBER01 is uniform in 0..1 */
+
+float box_muller(float m, float s)	/* normal random variate generator */
+{				        			/* mean m, standard deviation s */
+	float x1, x2, w, y1;
+	static float y2;
+	static int use_last = 0;
+
+	if (use_last)		        	/* use value from previous call */
+	{
+		y1 = y2;
+		use_last = 0;
+	}
+	else
+	{
+		do {
+			x1 = 2.0 * RANDOMNUMBER01 - 1.0;
+			x2 = 2.0 * RANDOMNUMBER01 - 1.0;
+			w = x1 * x1 + x2 * x2;
+		} while ( w >= 1.0 );
+
+		w = sqrt( (-2.0 * log( w ) ) / w );
+		y1 = x1 * w;
+		y2 = x2 * w;
+		use_last = 1;
+	}
+
+	return( m + y1 * s );
+}
 
 void showFloatMatrix(int max1, int max2, float array[max1][max2])
 {

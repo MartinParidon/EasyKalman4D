@@ -1,0 +1,73 @@
+
+	srand(time(NULL));
+	int i, j;
+	float vals_gauss[2][SIZEGAUSS] = {0};		// 0: val, 1: F(val) (Prob density fct)
+	for (i = 0; i < SIZEOFARRAY(vals_gauss[0]); i++)
+	{
+		// PRINTFLOAT(stddist((float)rand(), 10, 2));
+		vals_gauss[0][i]=((float)rand()/((float)RAND_MAX)*6)+7;			// Random vals between 7 and 13
+		vals_gauss[1][i]=(stddist(vals_gauss[0][i], 10, 1));			// Prob density Fct of this variable for mu = 10 and sigma = 2
+		PRINTFLOAT(vals_gauss[0][i])
+		PRINTTAB
+		PRINTFLOAT(vals_gauss[1][i])
+	}
+	
+	insertionSort(vals_gauss[1], vals_gauss[0], SIZEOFARRAY(vals_gauss[0]));
+	SHOWFLOATARRAY(vals_gauss[0])
+	SHOWFLOATARRAY(vals_gauss[1])
+	
+	float vals[SIZE];
+	j = 0;
+	for (i = SIZEOFARRAY(vals_gauss[0]) - SIZE; i < SIZEGAUSS; i++)
+	{
+		vals[j] = vals_gauss[0][i];
+		j++;
+	}
+	PRINTRETURN
+	
+	SHOWFLOATARRAY(vals)
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+
+
+float stddist(float x, float mu, float sigma)
+{
+	float f = ( (1/(sqrt(2*M_PI*pow(sigma,2))))
+			   * exp(-(pow((x-mu),2)/(powf(2*sigma,2)))));
+	return f;
+}
+
+// arr1: Sort by this value, arr2: "adjescent sort"
+void insertionSort(float arr1[], float arr2[], int size) 
+{ 
+   int i, j; 
+   float key, key1;
+   for (i = 1; i < size; i++) 
+   { 
+       key = arr1[i];  
+       key1 = arr2[i];  
+       j = i-1; 
+  
+       /* Move elements of arr1[0..i-1], that are 
+          greater than key, to one position ahead 
+          of their current position */
+       while (j >= 0 && arr1[j] > key) 
+       { 
+           arr1[j+1] = arr1[j]; 
+           arr2[j+1] = arr2[j]; 
+           j = j-1; 
+       } 
+       arr1[j+1] = key; 
+       arr2[j+1] = key1; 
+   } 
+} 

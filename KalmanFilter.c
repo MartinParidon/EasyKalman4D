@@ -5,21 +5,23 @@
 #include "KalmanFilter.h"
 
 int main()
-{	
+{		
 	int iVal;
 	int iRow;
 	int iCol;
 	float measurementsVel[2][NUM_VALS];					// Artificial Measurement values. Index 1: x direction, Index 2: y direction
 	int dt;												// Timestep
+	srand(time(NULL));									// Get "real" random numbers http://users.wpi.edu/~bpwiselybabu/2012/02/07/generating-white-gaussian-noise/
 	
 	for (iVal = 0; iVal < NUM_VALS; iVal++)
 	{
-		measurementsVel[0][iVal] = (((float)rand()) / ((float)RAND_MAX) * 6) + 7;
+		// measurementsVel[0][iVal] = (((float)rand()) / ((float)RAND_MAX) * 6) + 7;		// NOT GAUSSIAN!! Completely random numbers 7 - 13
+		measurementsVel[0][iVal] = box_muller(10, 0.1);
 		measurementsVel[1][iVal] = 0;
 		// fprintf(stderr, "%f\t\t", measurementsVel[0][iVal]);
 	}
 	
-	dt = 1;
+	dt = 2;
 	
 	float x[4] = {0, 0, 10, 0};							// state vector: x, y, x', y'
 	
@@ -55,6 +57,7 @@ int main()
 	I[2][0] = 0;	I[2][1] = 0;	I[2][2] = 1;	I[2][3] = 0;
 	I[3][0] = 0;	I[3][1] = 0;	I[3][2] = 0;	I[3][3] = 1;
 	
+	FILE *f = fopen("out.txt", "w");
 	
 	for (iVal = 0; iVal < NUM_VALS; iVal++)
 	// DEBUG!!!!!!!!
@@ -118,7 +121,11 @@ int main()
 		memcpy(P, P_interm, sizeof(P));
 		
 		SHOWFLOATARRAY(x)
+		WRITEFLOATARRAYTOFILETAB(f,x)
+		WRITEENTERTOFILE(f)
 	}
+		
+	fclose(f);
 	
 	return 0;
 }
