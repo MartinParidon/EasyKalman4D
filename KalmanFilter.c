@@ -16,9 +16,8 @@ int main()
 	for (iVal = 0; iVal < NUM_VALS; iVal++)
 	{
 		// measurementsVel[0][iVal] = (((float)rand()) / ((float)RAND_MAX) * 6) + 7;		// NOT GAUSSIAN!! Completely random numbers 7 - 13
-		measurementsVel[0][iVal] = box_muller(10, 0.1);
+		measurementsVel[0][iVal] = box_muller(10, 2);
 		measurementsVel[1][iVal] = 0;
-		// fprintf(stderr, "%f\t\t", measurementsVel[0][iVal]);
 	}
 	
 	dt = 2;
