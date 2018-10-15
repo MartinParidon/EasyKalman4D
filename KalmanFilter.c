@@ -6,6 +6,7 @@
 
 int main()
 {		
+	
 	int iVal;
 	int iRow;
 	int iCol;
@@ -13,14 +14,16 @@ int main()
 	int dt;												// Timestep
 	srand(time(NULL));									// Get "real" random numbers http://users.wpi.edu/~bpwiselybabu/2012/02/07/generating-white-gaussian-noise/
 	
+	float mean = 10;
+	float stddev = mean/2;
 	for (iVal = 0; iVal < NUM_VALS; iVal++)
 	{
 		// measurementsVel[0][iVal] = (((float)rand()) / ((float)RAND_MAX) * 6) + 7;		// NOT GAUSSIAN!! Completely random numbers 7 - 13
-		measurementsVel[0][iVal] = box_muller(10, 2);
+		measurementsVel[0][iVal] = box_muller(mean, stddev);	// Gauss distributed random numbers
 		measurementsVel[1][iVal] = 0;
 	}
 	
-	dt = 2;
+	dt = 1;
 	
 	float x[4] = {0, 0, 10, 0};							// state vector: x, y, x', y'
 	
@@ -57,6 +60,9 @@ int main()
 	I[3][0] = 0;	I[3][1] = 0;	I[3][2] = 0;	I[3][3] = 1;
 	
 	FILE *f = fopen("out.txt", "w");
+	
+	FILE *gnuplot = popen("gnuplot", "w");				// https://stackoverflow.com/questions/14311640/how-to-plot-data-by-c-program
+	fprintf(gnuplot, "plot '-'\n");
 	
 	for (iVal = 0; iVal < NUM_VALS; iVal++)
 	// DEBUG!!!!!!!!
@@ -122,9 +128,18 @@ int main()
 		SHOWFLOATARRAY(x)
 		WRITEFLOATARRAYTOFILETAB(f,x)
 		WRITEENTERTOFILE(f)
+		
+		
+		fprintf(gnuplot, "%d %g\n", iVal, x[2]);
+		
 	}
+	
+	fprintf(gnuplot, "e\n");
+	fflush(gnuplot);
 		
 	fclose(f);
+	
+	system("pause");	
 	
 	return 0;
 }
