@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include "KalmanFilter.h"
+#include <time.h>
 
 /************************************************************************************************/
 /************************************************************************************************/
@@ -13,27 +14,34 @@
 /************************************************************************************************/
 /************************************* Main *****************************************************/
 /************************************************************************************************/
-int main()
+int main(void)
 {		
+	clock_t start, end;
+    double cpu_time_used;
+     
 	int iVal;
-	float measurementsVel[2][NUM_VALS];					// Artificial Measurement values. Index 1: x direction, Index 2: y direction
-	int dt;												// Timestep
-	srand(time(NULL));									// Get "real" random number http://users.wpi.edu/~bpwiselybabu/2012/02/07/generating-white-gaussian-noise/
+	float X, Y; 
+	const numVals = 100;
+	float measurementsVel[2][numVals];					// Artificial Measurement values. Index 1: x direction, Index 2: y direction
+	int dt = 1;												// Timestep
 	
 	float meanX = 10;
-	float stddevX = 3;
+	float stddevX = 2;
 	float meanY = 0;
 	float stddevY = 0.05;
-	for (iVal = 0; iVal < NUM_VALS; iVal++)
+	
+	srand(time(NULL));									// Get "real" random numbers http://users.wpi.edu/~bpwiselybabu/2012/02/07/generating-white-gaussian-noise/
+	
+	for (iVal = 0; iVal < numVals; iVal++)
 	{
-		// measurementsVel[0][iVal] = (((float)rand()) / ((float)RAND_MAX) * 6) + 7;		// NOT GAUSSIAN!! Completely random sizebers 7 - 13
+		// measurementsVel[0][iVal] = (((float)rand()) / ((float)RAND_MAX) * 6) + 7;		// NOT GAUSSIAN!! Completely random number 7 - 13
 		// measurementsVel[1][iVal] = 0;													// Just simply 0
 		measurementsVel[0][iVal] = box_muller(meanX, stddevX);			// Gaussian distributed random number for x measurements
 		measurementsVel[1][iVal] = box_muller(meanY, stddevY);			// ... y measurements
-	}
+	}								// Get "real" random numbers http://users.wpi.edu/~bpwiselybabu/2012/02/07/generating-white-gaussian-noise/
 	
-	dt = 1;
 	
+	/* Initial matrix states */
 	float x[4] = {0, 0, 10, 0};							// state vector: x, y, x', y'
 	
 	float P[4][4];										// Initial uncertainty
@@ -67,70 +75,71 @@ int main()
 	I[1][0] = 0;	I[1][1] = 1;	I[1][2] = 0;	I[1][3] = 0;
 	I[2][0] = 0;	I[2][1] = 0;	I[2][2] = 1;	I[2][3] = 0;
 	I[3][0] = 0;	I[3][1] = 0;	I[3][2] = 0;	I[3][3] = 1;
+		
+	/* Intermediate variables, needed for matrix operations */
+	float AP[4][4] = {0};
+	float At[4][4] = {0};
+	float APAt[4][4] = {0};
+	float Z[2] = {0};
+	float Hx[2] = {0};
+	float y[2] = {0};
+	float HP[2][4] = {0};
+	float Ht[4][2] = {0};
+	float HPHt[2][2] = {0};
+	float S[2][2] = {0};
+	float PHt[4][2] = {0};
+	float Si[2][2] = {0};
+	float deter = 0;
+	float K[4][2] = {0};
+	float Ky[4] = {0};
+	float KH[4][4] = {0};
+	float I_KH[4][4] = {0};
+	float P_interm[4][4] = {0};
 	
-	FILE *f = fopen("out.txt", "w");
+	FILE *f = fopen("out.txt", "w");					/* Define file handle */
 	
-	FILE *gnuplot = popen("gnuplot", "w");				// https://stackoverflow.com/questions/14311640/how-to-plot-data-by-c-program
+	FILE *gnuplot = popen("gnuplot", "w");				/* Define gnuplot handle: https://stackoverflow.com/questions/14311640/how-to-plot-data-by-c-program */
 	fprintf(gnuplot, "plot '-'\n");
 	
-	for (iVal = 0; iVal < NUM_VALS; iVal++)
-	// DEBUG!!!!!!!!
-	// iVal=0;
+	for (iVal = 0; iVal < numVals; iVal++)				/* May be overwritten for debug purposes */
+
 	{
-		// Prediction
-		// x = A*x
+		/* Prediction */
+		/* x=A*x */
 		multiplyMatrixWithVector_NM_M_N(4, 4, A, x, x);
 		
-		// P = A*P*A'+Q
-		float AP[4][4] = {0};
+		/* P=A*P*A'+Q */
 		multiplyMatrix_NN_NN_NN(4, A, P, AP);
-		float At[4][4] = {0};
 		transposeMatrix_NM_MN(4, 4, A, At);
-		float APAt[4][4] = {0};
 		multiplyMatrix_NN_NN_NN(4, AP, At, APAt);
-		addMatrices(4,4,APAt,Q,P);
+		addMatrices(4, 4, APAt, Q, P);
 		
-		// y = Z-(H*x)
-		float Z[2];
-		Z[0] = measurementsVel[0][iVal];
-		// DEBUG!!!!!!!!
-		// Z[0] = 10;
+		/* Correction */
+		/* y=Z-(H*x) */
+		Z[0] = measurementsVel[0][iVal];				/* May be overwritten for debug purposes */
 		Z[1] = measurementsVel[1][iVal];
-		float Hx[2] = {0};
 		multiplyMatrixWithVector_NM_M_N(2, 4, H, x, Hx);
-		float y[2] = {0};
 		subtractVectorFromVector(2, Z, Hx, y);
 		
-		// S=(H*P*H'+R)
-		float HP[2][4] = {0};
-		multiplyMatrix_NN_NN_NN(4, H, P, HP);
-		float Ht[4][2] = {0};
+		/* S=(H*P*H'+R) */
+		multiplyMatrix_MN_NN_MN(2, 4, H, P, HP);
 		transposeMatrix_NM_MN(2, 4, H, Ht);
-		float HPHt[2][2] = {0};
 		multiplyMatrix_NM_MN_NN(2, 4, HP, Ht, HPHt);
-		float S[2][2] = {0};
 		addMatrices(2, 2, HPHt, R, S);
 		
-		// K=P*H'*inv(S)
-		float PHt[4][2] = {0};
+		/* K=P*H'*inv(S) */
 		multiplyMatrix_NN_NM_NM(4, 2, P, Ht, PHt);
-		float Si[2][2] = {0};
-		float deter = (float) det(S,2);
-		inverse(S,Si,2,deter);
-		float K[4][2] = {0};
+		deter = (float) det(S, 2);
+		inverse(S, Si, 2, deter);
 		multiplyMatrix_MN_NN_MN(4, 2, PHt, Si, K);
 		
-		// x=x+(K*y)
-		float Ky[4] = {0};
+		/* x=x+(K*y) */
 		multiplyMatrixWithVector_NM_M_N(4, 2, K, y, Ky);
 		addVectors(4, x, Ky, x);
 		
-		// P=(I-(K*H))*P
-		float KH[4][4] = {0};
+		/* P=(I-(K*H))*P */
 		multiplyMatrix_NM_MN_NN(4, 2, K, H, KH);
-		float I_KH[4][4] = {0};
 		subtractMatrixFromMatrix(4, 4, I, KH, I_KH);
-		float P_interm[4][4] = {0};
 		multiplyMatrix_NN_NN_NN(4, I_KH, P, P_interm);
 		memcpy(P, P_interm, sizeof(P));
 		
@@ -138,24 +147,25 @@ int main()
 		WRITEFLOATARRAYTOFILETAB(f,x)
 		WRITEENTERTOFILE(f)
 		
-		// DEBUG!!!!!!!!
-		// fprintf(gnuplot, "%d %g\n", iVal, measurementsVel[1][iVal]);
-		fprintf(gnuplot, "%d %g\n", iVal, x[1]);
+		fprintf(gnuplot, "%d %g\n", iVal, x[0]);;		/* May be overwritten for debug purposes */
 		
 	}
 	
+	/* Properly finish gnuplot */
 	fprintf(gnuplot, "e\n");
 	fflush(gnuplot);
 		
+	/* Properly finish file handlung */
 	fclose(f);
 	
+	/* pause the output so user can see the values and gnuplot won't close*/
 	system("pause");	
 	
 	return 0;
 }
 
 /************************************************************************************************/
-/************************************* Random sizeber generator **********************************/
+/************************************* Random number generator **********************************/
 /************************************************************************************************/
 float box_muller(float m, float s)	
 {				        			
@@ -171,8 +181,8 @@ float box_muller(float m, float s)
 	else
 	{
 		do {
-			x1 = 2.0 * RANDOMNUMBER01 - 1.0;
-			x2 = 2.0 * RANDOMNUMBER01 - 1.0;
+			x1 = 2.0 * (((float)rand()) / ((float)RAND_MAX)) - 1.0;
+			x2 = 2.0 * (((float)rand()) / ((float)RAND_MAX)) - 1.0;
 			w = x1 * x1 + x2 * x2;
 		} while ( w >= 1.0 );
 
@@ -184,6 +194,37 @@ float box_muller(float m, float s)
 
 	return( m + y1 * s );
 }
+
+void polar(float *x1, float *x2)
+{
+   float u, v, q, p;
+
+   do {
+      u = 2.0 * (((float)rand()) / ((float)RAND_MAX)) - 1;
+      v = 2.0 * (((float)rand()) / ((float)RAND_MAX)) - 1;
+      q  = u * u + v * v;
+   } while (q <= 0.0 || q >= 1.0);
+
+   p = sqrt(-2 * log(q) / q);
+   *x1 = u * p;
+   *x2 = v * p;
+}
+
+/* Debug: Could be implemented like this. Could be slightly more efficient, but a bit less easy in implementation
+for (iVal = 0; iVal < numVals - 1; iVal+=2)
+{
+	polar(&X, &Y);
+	PRINTFLOAT((X*1+10))
+	PRINTFLOAT((Y*1+10))
+	measurementsVel[0][iVal] = X*stddevX+meanX;
+	measurementsVel[0][iVal+1] = Y*stddevX+meanX;
+}
+
+for (iVal = 0; iVal < numVals; iVal++)
+{
+	PRINTFLOAT(measurementsVel[0][iVal])
+} 
+*/
 
 /************************************************************************************************/
 /************************************* Print functions ******************************************/

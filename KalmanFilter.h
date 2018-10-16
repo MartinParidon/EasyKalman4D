@@ -10,7 +10,7 @@
 /************************************************************************************************/
 /************************************* Main *****************************************************/
 /************************************************************************************************/
-int main();
+int main(void);
 
 /************************************************************************************************/
 /************************************* Random sizeber generator **********************************/
@@ -18,6 +18,8 @@ int main();
 /* Normal random variate generator (box muller method), taken from ftp://ftp.taygeta.com/pub/c/boxmuller.c */
 float box_muller(float m, float s);
 
+/* Alternative method that doesn't use trigonometric functions. Might be a bit more performant. Taken from https://de.wikipedia.org/wiki/Polar-Methode#C */
+void polar(float *x1, float *x2);
 /************************************************************************************************/
 /************************************* Print functions ******************************************/
 /************************************************************************************************/
@@ -42,7 +44,7 @@ void multiplyMatrix_NN_NM_NM(int N, int M, float mat1[N][N], float mat2[N][M], f
 /* Multiply matrices. Matrix 1: [M][N], Matrix 2: [N][N], Resulting Matrix: [M][N] */
 void multiplyMatrix_MN_NN_MN(int M, int N, float mat1[M][N], float mat2[N][N], float res[M][N]);
 
-/* Multiply Matrix with vector. [N][M], Vector in: [M], Vector out: [N] */
+/* Multiply Matrix with vector. [N][M], Vector in: [M], Vector out: [N]. [N] may be equal to [M] */
 void multiplyMatrixWithVector_NM_M_N(int N, int M, float matrix[N][M],  float vectorIn[M], float vectorOut[N]);
 
 /* Subtracts one vector from another one. Both have same size */
@@ -57,7 +59,7 @@ void addMatrices(int N, int M, float matrix1[N][M], float matrix2[N][M], float e
 /* Subtracts same sized matrices from one another */
 void subtractMatrixFromMatrix(int N, int M, float matrix1[N][M],  float matrix2[N][M], float erg[N][M]);
 
-/* Transpose Matrix: matrix2[i][j] = matrix1[j][i] */
+/* Transpose Matrix: matrix2[i][j] = matrix1[j][i] [N] may be equal to [M]*/
 void transposeMatrix_NM_MN(int N, int M, float matrix1[N][M], float matrix2[M][N]);
 
 /************************************************************************************************/
@@ -86,39 +88,26 @@ void minor(float b[2][2], float a[2][2], int i, int n);
 /************************************* Useful shortcuts (defines) *******************************/
 /************************************************************************************************/
 /************************************************************************************************/
-
-#define NUM_VALS 100
-
+/* Get length of Matrix / Array */
 #define MATRIX_LEN1(matrix) (sizeof((matrix))/sizeof((matrix)[0][0]))/(sizeof((matrix)[0])/sizeof((matrix)[0][0]))
-
 #define MATRIX_LEN2(matrix) (sizeof((matrix))/sizeof((matrix)[0][0]))/((sizeof((matrix))/sizeof((matrix)[0][0]))/(sizeof((matrix)[0])/sizeof((matrix)[0][0])))
-
-#define ARRAY_LEN(array) sizeof(array)/sizeof(array[0])
-
-#define SHOWFLOATARRAY(array) showFloatArray(sizeof(array)/sizeof(float), array);
-
-#define SHOWFLOATMATRIX(matrix) showFloatMatrix(sizeof(matrix)/sizeof(matrix[0]), sizeof(matrix[0])/sizeof(typeof(matrix[0][0])), matrix);
-
-#define PRINTFLOAT(val) printf("%f\n", val);
-
-#define PRINTINT(val) printf("%d\n", val);
-
-#define PRINTSTRING(val) printf("%s\n", val);
-
-#define PRINTRETURN printf("\n");
-
-#define PRINTTAB printf("\t");
-
 #define SIZEOFARRAY(arr) sizeof(arr)/sizeof(arr[0])
 
+/*  Easy access to print functions */
+#define SHOWFLOATARRAY(array) showFloatArray(sizeof(array)/sizeof(float), array);
+#define SHOWFLOATMATRIX(matrix) showFloatMatrix(sizeof(matrix)/sizeof(matrix[0]), sizeof(matrix[0])/sizeof(typeof(matrix[0][0])), matrix);
+
+/* Easy access to generally useful print functions */
+#define PRINTFLOAT(val) printf("%f\n", val);
+#define PRINTINT(val) printf("%d\n", val);
+#define PRINTSTRING(val) printf("%s\n", val);
+#define PRINTRETURN printf("\n");
+#define PRINTTAB printf("\t");
+
+/* Easy access to file write functions */
 #define WRITEFLOATTOFILE(f, val) fprintf(f, "%f\n", val);
-
 #define WRITEFLOATARRAYTOFILE(f, arr) int i; for ( i= 0; i < SIZEOFARRAY(arr); i++) fprintf(f, "%f\n", arr[i]);
-
 #define WRITEFLOATARRAYTOFILETAB(f, arr) int i; for ( i= 0; i < SIZEOFARRAY(arr); i++) fprintf(f, "%f\t", arr[i]);
-
 #define WRITEENTERTOFILE(f) fprintf(f, "\n");
-
-#define RANDOMNUMBER01 (((float)rand()) / ((float)RAND_MAX))         /* RANDOMNUMBER01 is uniform in 0..1. Needed for bux_muller */
 
 #endif
