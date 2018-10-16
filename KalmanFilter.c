@@ -4,23 +4,32 @@
 #include <math.h>
 #include "KalmanFilter.h"
 
+/************************************************************************************************/
+/************************************************************************************************/
+/************************************* Function definitions *************************************/
+/************************************************************************************************/
+/************************************************************************************************/
+
+/************************************************************************************************/
+/************************************* Main *****************************************************/
+/************************************************************************************************/
 int main()
 {		
 	
 	int iVal;
-	int iRow;
-	int iCol;
 	float measurementsVel[2][NUM_VALS];					// Artificial Measurement values. Index 1: x direction, Index 2: y direction
 	int dt;												// Timestep
-	srand(time(NULL));									// Get "real" random numbers http://users.wpi.edu/~bpwiselybabu/2012/02/07/generating-white-gaussian-noise/
+	srand(time(NULL));									// Get "real" random sizebers http://users.wpi.edu/~bpwiselybabu/2012/02/07/generating-white-gaussian-noise/
 	
-	float mean = 10;
-	float stddev = mean/2;
+	float meanX = 10;
+	float stddevX = 3;
+	float meanY = 0;
+	float stddevY = 0.05;
 	for (iVal = 0; iVal < NUM_VALS; iVal++)
 	{
-		// measurementsVel[0][iVal] = (((float)rand()) / ((float)RAND_MAX) * 6) + 7;		// NOT GAUSSIAN!! Completely random numbers 7 - 13
-		measurementsVel[0][iVal] = box_muller(mean, stddev);	// Gauss distributed random numbers
-		measurementsVel[1][iVal] = 0;
+		// measurementsVel[0][iVal] = (((float)rand()) / ((float)RAND_MAX) * 6) + 7;		// NOT GAUSSIAN!! Completely random sizebers 7 - 13
+		measurementsVel[0][iVal] = box_muller(meanX, stddevX);	// Gauss distributed random sizebers for x measurements
+		measurementsVel[1][iVal] = box_muller(meanY, stddevY);			// ... y measurements
 	}
 	
 	dt = 1;
@@ -43,9 +52,9 @@ int main()
 	H[0][0] = 0;	H[0][1] = 0;	H[0][2] = 1;	H[0][3] = 0;	
 	H[1][0] = 0;	H[1][1] = 0;	H[1][2] = 0;	H[1][3] = 1;
 	
-	float R[2][2];										// Measurement noise covariance
-	R[0][0] = 10;	R[0][1] = 0;		
-	R[1][0] = 0;	R[1][1] = 10;
+	float R[2][2];										// Measurement noise covariance (low stddev of meas. values: This can be low -> trust measured values MORE). If too high, he starts interpreting
+	R[0][0] = 1;	R[0][1] = 0;		
+	R[1][0] = 0;	R[1][1] = 1;
 	
 	float Q[4][4];										// Initial uncertainty
 	Q[0][0] = 0.25 * powf(dt, 4);	Q[0][1] = 0.25 * powf(dt, 4);	Q[0][2] = 0.5 * powf(dt, 3);	Q[0][3] = 0.5 * powf(dt, 3);	
@@ -70,67 +79,67 @@ int main()
 	{
 		// Prediction
 		// x = A*x
-		multiplyMatrixWithVectorNMMM(4, 4, A, x, x);
+		multiplyMatrixWithVector_NM_M_N(4, 4, A, x, x);
 		
 		// P = A*P*A'+Q
 		float AP[4][4] = {0};
-		multiplyMatrixNN(4, A, P, AP);
+		multiplyMatrix_NN_NN_NN(4, A, P, AP);
 		float At[4][4] = {0};
-		transposeMatrix(4,4,A,At);
+		transposeMatrix_NM_MN(4, 4, A, At);
 		float APAt[4][4] = {0};
-		multiplyMatrixNN(4, AP, At, APAt);
-		addMatrix(4,4,APAt,Q,P);
+		multiplyMatrix_NN_NN_NN(4, AP, At, APAt);
+		addMatrices(4,4,APAt,Q,P);
 		
 		// y = Z-(H*x)
 		float Z[2];
 		Z[0] = measurementsVel[0][iVal];
 		// DEBUG!!!!!!!!
-		// Z[0] = 10.183227263001436;
+		// Z[0] = 10;
 		Z[1] = measurementsVel[1][iVal];
 		float Hx[2] = {0};
-		multiplyMatrixWithVectorNMMM(2, 4, H, x, Hx);
+		multiplyMatrixWithVector_NM_M_N(2, 4, H, x, Hx);
 		float y[2] = {0};
-		subtractVector(2, Z, Hx, y);
+		subtractVectorFromVector(2, Z, Hx, y);
 		
 		// S=(H*P*H'+R)
 		float HP[2][4] = {0};
-		multiplyMatrixNN(4, H, P, HP);
+		multiplyMatrix_NN_NN_NN(4, H, P, HP);
 		float Ht[4][2] = {0};
-		transposeMatrix(2, 4, H, Ht);
+		transposeMatrix_NM_MN(2, 4, H, Ht);
 		float HPHt[2][2] = {0};
-		multiplyMatrixNM(2, 4, HP, Ht, HPHt);
+		multiplyMatrix_NM_MN_NN(2, 4, HP, Ht, HPHt);
 		float S[2][2] = {0};
-		addMatrix(2,2,HPHt,R,S);
+		addMatrices(2,2,HPHt,R,S);
 		
 		// K=P*H'*inv(S)
 		float PHt[4][2] = {0};
-		multiplyMatrixNO(4, 2, P, Ht, PHt);
+		multiplyMatrix_NN_NM_NM(4, 2, P, Ht, PHt);
 		float Si[2][2] = {0};
 		float deter = (float) det(S,2);
 		inverse(S,Si,2,deter);
 		float K[4][2] = {0};
-		multiplyMatrixON(4, 2, PHt, Si, K);
+		multiplyMatrix_MN_NN_MN(4, 2, PHt, Si, K);
 		
 		// x=x+(K*y)
 		float Ky[4] = {0};
-		multiplyMatrixWithVectorNMMN(4, 2, K, y, Ky);
-		addVector(4, x, Ky, x);
+		multiplyMatrixWithVector_NM_M_N(4, 2, K, y, Ky);
+		addVectors(4, x, Ky, x);
 		
 		// P=(I-(K*H))*P
 		float KH[4][4] = {0};
-		multiplyMatrixNM(4, 2, K, H, KH);
+		multiplyMatrix_NM_MN_NN(4, 2, K, H, KH);
 		float I_KH[4][4] = {0};
-		subtractMatrix(4, 4, I, KH, I_KH);
+		subtractMatrixFromMatrix(4, 4, I, KH, I_KH);
 		float P_interm[4][4] = {0};
-		multiplyMatrixNN(4, I_KH, P, P_interm);
+		multiplyMatrix_NN_NN_NN(4, I_KH, P, P_interm);
 		memcpy(P, P_interm, sizeof(P));
 		
 		SHOWFLOATARRAY(x)
 		WRITEFLOATARRAYTOFILETAB(f,x)
 		WRITEENTERTOFILE(f)
 		
-		
-		fprintf(gnuplot, "%d %g\n", iVal, x[2]);
+		// fprintf(gnuplot, "%d %g\n", iVal, measurementsVel[1][iVal]);
+		fprintf(gnuplot, "%d %g\n", iVal, x[1]);
 		
 	}
 	
@@ -142,4 +151,260 @@ int main()
 	system("pause");	
 	
 	return 0;
+}
+
+/************************************************************************************************/
+/************************************* Random sizeber generator **********************************/
+/************************************************************************************************/
+float box_muller(float m, float s)	
+{				        			
+	float x1, x2, w, y1;
+	static float y2;
+	static int use_last = 0;
+
+	if (use_last)		        	
+	{
+		y1 = y2;
+		use_last = 0;
+	}
+	else
+	{
+		do {
+			x1 = 2.0 * RANDOMNUMBER01 - 1.0;
+			x2 = 2.0 * RANDOMNUMBER01 - 1.0;
+			w = x1 * x1 + x2 * x2;
+		} while ( w >= 1.0 );
+
+		w = sqrt( (-2.0 * log( w ) ) / w );
+		y1 = x1 * w;
+		y2 = x2 * w;
+		use_last = 1;
+	}
+
+	return( m + y1 * s );
+}
+
+/************************************************************************************************/
+/************************************* Print functions ******************************************/
+/************************************************************************************************/
+void showFloatMatrix(int N, int M, float array[N][M])
+{
+	int n, m;
+	for (n = 0; n < N; n++)
+	{
+		for (m = 0; m < M; m++)
+			printf("%f\t", array[n][m]);
+		printf("\n");
+	}
+}
+
+void showFloatArray(int N, float array[])
+{
+	int n;
+	for (n = 0; n < N; n++)
+	{
+		printf("%f\t", array[n]);
+	}
+	printf("\n");
+}
+
+/************************************************************************************************/
+/************************************* Matrix and vector calculations ***************************/
+/************************************************************************************************/
+void multiplyMatrix_NN_NN_NN(int N, float mat1[][N], float mat2[][N], float res[][N]) 
+{ 
+    int n1, n2, n3; 
+    for (n1 = 0; n1 < N; n1++) 
+    { 
+        for (n2 = 0; n2 < N; n2++) 
+        { 
+            res[n1][n2] = 0; 
+            for (n3 = 0; n3 < N; n3++) 
+                res[n1][n2] += mat1[n1][n3]*mat2[n3][n2]; 
+        } 
+    } 
+} 
+
+void multiplyMatrix_NM_MN_NN(int N, int M, float mat1[N][M], float mat2[M][N], float res[N][N]) 
+{ 
+    int n1, n2, m; 
+    for (n1 = 0; n1 < N; n1++) 
+    { 
+        for (n2 = 0; n2 < N; n2++) 
+        { 
+            res[n1][n2] = 0; 
+            for (m = 0; m < M; m++) 
+                res[n1][n2] += mat1[n1][m]*mat2[m][n2]; 
+        } 
+    } 
+} 
+
+void multiplyMatrix_NN_NM_NM(int N, int M, float mat1[N][N], float mat2[N][M], float res[N][M]) 
+{ 
+    int n1, m, n2; 
+    for (n1 = 0; n1 < N; n1++) 
+    { 
+        for (m = 0; m < M; m++) 
+        { 
+            res[n1][m] = 0; 
+            for (n2 = 0; n2 < N; n2++) 
+                res[n1][m] += mat1[n1][n2]*mat2[n2][m]; 
+        } 
+    } 
+} 
+
+void multiplyMatrix_MN_NN_MN(int M, int N, float mat1[M][N], float mat2[N][N], float res[M][N]) 
+{ 
+    int m, n1, n2; 
+    for (m = 0; m < M; m++) 
+    { 
+        for (n1 = 0; n1 < N; n1++) 
+        { 
+            res[m][n1] = 0; 
+            for (n2 = 0; n2 < N; n2++) 
+                res[m][n1] += mat1[m][n2]*mat2[n2][n1]; 
+        } 
+    } 
+} 
+
+void multiplyMatrixWithVector_NM_M_N(int N, int M, float matrix[N][M],  float vectorIn[M], float vectorOut[N]) 
+{ 
+	int n, m;
+	for (n = 0; n < N; n++)
+	{
+		float sumProdMV = 0;
+		for (m = 0; m < M; m++)
+		{
+			sumProdMV += matrix[n][m] * vectorIn[m];
+		}
+		vectorOut[n] = sumProdMV;
+	} 
+} 
+
+void transposeMatrix_NM_MN(int N, int M, float matrix1[N][M],  float matrix2[M][N])
+{
+	int n, m;
+	for (n = 0; n < N; n++)
+	{
+		for (m = 0; m < M; m++)
+			matrix2[m][n] = matrix1[n][m];
+	}
+}
+
+void addMatrices(int N, int M, float matrix1[N][M],  float matrix2[N][M], float erg[N][M])
+{
+	int n, m;
+	for (n = 0; n < N; n++) 
+	{
+		for (m = 0 ; m < M; m++) 
+		{
+			 erg[n][m] = matrix1[n][m] + matrix2[n][m];
+		}
+	}
+}
+
+void subtractVectorFromVector(int N, float vector1[N], float vector2[N], float erg[N])
+{
+	int n;
+	for (n = 0; n < N; n++) 
+	{
+		erg[n] = vector1[n] - vector2[n];
+	}
+}
+
+void addVectors(int N, float vector1[N], float vector2[N], float erg[N])
+{
+	int n;
+	for (n = 0; n < N; n++) 
+	{
+		erg[n] = vector1[n] + vector2[n];
+	}
+}
+
+void subtractMatrixFromMatrix(int N, int M, float matrix1[N][M],  float matrix2[N][M], float erg[N][M])
+{
+	int n, m;
+	for (n = 0; n < N; n++) 
+	{
+		for (m = 0 ; m < M; m++) 
+		{
+			 erg[n][m] = matrix1[n][m] - matrix2[n][m];
+		}
+	}
+}
+
+/************************************************************************************************/
+/************************************* Matrix inverse calculations ******************************/
+/************************************************************************************************/
+void cofactor(float a[2][2],float d[2][2],float n,float determinate){
+	float b[2][2],c[2][2];
+	int l,h,m,k,i,j;
+	for (h=0;h<n;h++)
+		for (l=0;l<n;l++){
+			m=0;
+			k=0;
+			for (i=0;i<n;i++)
+				for (j=0;j<n;j++)
+					if (i != h && j != l){
+						b[m][k]=a[i][j];
+						if (k<(n-2))
+							k++;
+						else{
+							k=0;
+							m++;
+						}
+					}
+			c[h][l] = pow(-1,(h+l))*det(b,(n-1));	/* c = cofactor Matrix */
+		}
+	transpose(c,d,n,determinate);	//* read function */
+}
+
+void inverse(float a[2][2],float d[2][2],int n,float det){
+	if(det == 0)
+		printf("\nInverse of Entered Matrix is not possible\n");
+	else if(n == 1)
+		d[0][0] = 1;
+	else
+		cofactor(a,d,n,det);	/* read function */
+}
+
+float det(float a[2][2],int n){
+	int i;
+	float b[2][2],sum=0;
+	if (n == 1)
+return a[0][0];
+	else if(n == 2)
+return (a[0][0]*a[1][1]-a[0][1]*a[1][0]);
+	else
+		for(i=0;i<n;i++){
+			minor(b,a,i,n);	/* read function */
+			sum = (float) (sum+a[0][i]*pow(-1,i)*det(b,(n-1)));	/* sum = determinate matrix */
+		}
+return sum;
+}
+
+void transpose(float c[2][2],float d[2][2],float n,float det){
+	int i,j;
+	float b[2][2];
+	for (i=0;i<n;i++)
+		for (j=0;j<n;j++)
+			b[i][j] = c[j][i];
+	for (i=0;i<n;i++)
+		for (j=0;j<n;j++)
+			d[i][j] = b[i][j]/det;	/* array d[][] = inverse matrix */
+}
+
+void minor(float b[2][2],float a[2][2],int i,int n){
+	int j,l,h=0,k=0;
+	for(l=1;l<n;l++)
+		for( j=0;j<n;j++){
+			if(j == i)
+				continue;
+			b[h][k] = a[l][j];
+			k++;
+			if(k == (n-1)){
+				h++;
+				k=0;
+			}
+		}
 }
