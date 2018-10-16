@@ -15,11 +15,10 @@
 /************************************************************************************************/
 int main()
 {		
-	
 	int iVal;
 	float measurementsVel[2][NUM_VALS];					// Artificial Measurement values. Index 1: x direction, Index 2: y direction
 	int dt;												// Timestep
-	srand(time(NULL));									// Get "real" random sizebers http://users.wpi.edu/~bpwiselybabu/2012/02/07/generating-white-gaussian-noise/
+	srand(time(NULL));									// Get "real" random number http://users.wpi.edu/~bpwiselybabu/2012/02/07/generating-white-gaussian-noise/
 	
 	float meanX = 10;
 	float stddevX = 3;
@@ -28,7 +27,8 @@ int main()
 	for (iVal = 0; iVal < NUM_VALS; iVal++)
 	{
 		// measurementsVel[0][iVal] = (((float)rand()) / ((float)RAND_MAX) * 6) + 7;		// NOT GAUSSIAN!! Completely random sizebers 7 - 13
-		measurementsVel[0][iVal] = box_muller(meanX, stddevX);	// Gauss distributed random sizebers for x measurements
+		// measurementsVel[1][iVal] = 0;													// Just simply 0
+		measurementsVel[0][iVal] = box_muller(meanX, stddevX);			// Gaussian distributed random number for x measurements
 		measurementsVel[1][iVal] = box_muller(meanY, stddevY);			// ... y measurements
 	}
 	
@@ -109,7 +109,7 @@ int main()
 		float HPHt[2][2] = {0};
 		multiplyMatrix_NM_MN_NN(2, 4, HP, Ht, HPHt);
 		float S[2][2] = {0};
-		addMatrices(2,2,HPHt,R,S);
+		addMatrices(2, 2, HPHt, R, S);
 		
 		// K=P*H'*inv(S)
 		float PHt[4][2] = {0};
@@ -138,6 +138,7 @@ int main()
 		WRITEFLOATARRAYTOFILETAB(f,x)
 		WRITEENTERTOFILE(f)
 		
+		// DEBUG!!!!!!!!
 		// fprintf(gnuplot, "%d %g\n", iVal, measurementsVel[1][iVal]);
 		fprintf(gnuplot, "%d %g\n", iVal, x[1]);
 		

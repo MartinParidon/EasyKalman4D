@@ -89,6 +89,12 @@ void minor(float b[2][2], float a[2][2], int i, int n);
 
 #define NUM_VALS 100
 
+#define MATRIX_LEN1(matrix) (sizeof((matrix))/sizeof((matrix)[0][0]))/(sizeof((matrix)[0])/sizeof((matrix)[0][0]))
+
+#define MATRIX_LEN2(matrix) (sizeof((matrix))/sizeof((matrix)[0][0]))/((sizeof((matrix))/sizeof((matrix)[0][0]))/(sizeof((matrix)[0])/sizeof((matrix)[0][0])))
+
+#define ARRAY_LEN(array) sizeof(array)/sizeof(array[0])
+
 #define SHOWFLOATARRAY(array) showFloatArray(sizeof(array)/sizeof(float), array);
 
 #define SHOWFLOATMATRIX(matrix) showFloatMatrix(sizeof(matrix)/sizeof(matrix[0]), sizeof(matrix[0])/sizeof(typeof(matrix[0][0])), matrix);
