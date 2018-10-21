@@ -28,7 +28,7 @@ int main(void)
 	fillMeasurementMatrix(meanX, stddevX, meanY, stddevY, MATRIX_LEN1(measurementsVel), MATRIX_LEN2(measurementsVel), measurementsVel);
 	
 	/* Initial matrix states */
-	float x[4];							/* state vector: x, y, x', y' */
+	float x[4];											/* state vector: x, y, x', y' */
 	float P[4][4];										/* Matrix for covariances betweens variables */
 	float A[4][4];										/* Transition Matrix */
 	float H[2][4];										/* Measurement Fct (How sensor values are converted) */
