@@ -6,14 +6,10 @@
 #include "KalmanFilter.h"
 
 /************************************************************************************************/
-/************************************************************************************************/
 /************************************* Function definitions *************************************/
 /************************************************************************************************/
-/************************************************************************************************/
 
-/************************************************************************************************/
 /************************************* Main *****************************************************/
-/************************************************************************************************/
 int main(void)
 {		
 	int iVal;
@@ -32,8 +28,7 @@ int main(void)
 	fillMeasurementMatrix(meanX, stddevX, meanY, stddevY, MATRIX_LEN1(measurementsVel), MATRIX_LEN2(measurementsVel), measurementsVel);
 	
 	/* Initial matrix states */
-	float x[4] = {0, 0, 10, 0};							/* state vector: x, y, x', y' */
-	
+	float x[4];							/* state vector: x, y, x', y' */
 	float P[4][4];										/* Matrix for covariances betweens variables */
 	float A[4][4];										/* Transition Matrix */
 	float H[2][4];										/* Measurement Fct (How sensor values are converted) */
@@ -41,17 +36,7 @@ int main(void)
 	float Q[4][4];										/* Process covariance matrix */
 	float I[4][4];										/* Identity Matrix */
 	
-	initMatrices(dt, P, A, H, R, Q, I);
-	
-	Q[0][0] = 0.25 * powf(dt, 4);	Q[0][1] = 0.25 * powf(dt, 4);	Q[0][2] = 0.5 * powf(dt, 3);	Q[0][3] = 0.5 * powf(dt, 3);	
-	Q[1][0] = 0.25 * powf(dt, 4);	Q[1][1] = 0.25 * powf(dt, 4);	Q[1][2] = 0.5 * powf(dt, 3);	Q[1][3] = 0.5 * powf(dt, 3);
-	Q[2][0] = 0.5 * powf(dt, 3);	Q[2][1] = 0.5 * powf(dt, 3);	Q[2][2] = powf(dt, 2);	Q[2][3] = powf(dt, 2);
-	Q[3][0] = 0.5 * powf(dt, 3);	Q[3][1] = 0.5 * powf(dt, 3);	Q[3][2] = powf(dt, 2);	Q[3][3] = powf(dt, 2);
-	
-	I[0][0] = 1;	I[0][1] = 0;	I[0][2] = 0;	I[0][3] = 0;	
-	I[1][0] = 0;	I[1][1] = 1;	I[1][2] = 0;	I[1][3] = 0;
-	I[2][0] = 0;	I[2][1] = 0;	I[2][2] = 1;	I[2][3] = 0;
-	I[3][0] = 0;	I[3][1] = 0;	I[3][2] = 0;	I[3][3] = 1;
+	initMatrices(dt, x, P, A, H, R, Q, I);
 		
 	/* Intermediate variables, needed for matrix operations */
 	float AP[4][4] = {0};
@@ -75,11 +60,10 @@ int main(void)
 	
 	FILE *f = fopen("out.txt", "w");					/* Define file handle */
 	
-	FILE *gnuplot = popen("gnuplot -persistent", "w");				/* Define gnuplot handle: https://stackoverflow.com/questions/14311640/how-to-plot-data-by-c-program */
+	FILE *gnuplot = popen("gnuplot -persistent", "w");  /* Define gnuplot handle: https://stackoverflow.com/questions/14311640/how-to-plot-data-by-c-program */
 	fprintf(gnuplot, "plot '-'\n");
 	
 	for (iVal = 0; iVal < numVals; iVal++)				/* May be overwritten for debug purposes */
-
 	{
 		/* Prediction */
 		/* x=A*x */
@@ -135,33 +119,27 @@ int main(void)
 	/* Properly finish file handlung */
 	fclose(f);
 	
-	/* Pause the output so user can see the values and gnuplot won't close*/
-	/* Comment this one out if you need to stop after each run. Can't see gnuplot then. */
-	// system("pause");	
-	
 	return 0;
 }
 
-/************************************************************************************************/
 /************************************* Fill Measurement Matrix **********************************/
-/************************************************************************************************/
 void fillMeasurementMatrix(float meanX, float stddevX, float meanY, float stddevY, int numVars, int numVals, float measurementsVel[numVars][numVals])
 {	
 	int iVal;
 	for (iVal = 0; iVal < numVals; iVal++)
 	{
-		// measurementsVel[0][iVal] = (((float)rand()) / ((float)RAND_MAX) * 6) + 7;		// NOT GAUSSIAN!! Completely random number 7 - 13
-		// measurementsVel[1][iVal] = 0;													// Just simply 0
-		measurementsVel[0][iVal] = box_muller(meanX, stddevX);								// Gaussian distributed random number for x measurements
-		measurementsVel[1][iVal] = box_muller(meanY, stddevY);								// ... y measurements
+		/* measurementsVel[0][iVal] = (((float)rand()) / ((float)RAND_MAX) * 6) + 7; */		/* NOT GAUSSIAN!! Completely random number 7 - 13 */
+		/* measurementsVel[1][iVal] = 0; */													/* Just simply 0 */
+		measurementsVel[0][iVal] = box_muller(meanX, stddevX);								/* Gaussian distributed random number for x measurements */
+		measurementsVel[1][iVal] = box_muller(meanY, stddevY);								/* ... y measurements */
 	}	
 }
 
-/************************************************************************************************/
 /************************************* Init matrices ********************************************/
-/************************************************************************************************/
-void initMatrices(float dt, float P[4][4], float A[4][4], float H[2][4], float R[2][2], float Q[4][4], float I[4][4])
+void initMatrices(float dt, float x[4], float P[4][4], float A[4][4], float H[2][4], float R[2][2], float Q[4][4], float I[4][4])
 {					
+	x[0] = 0;		x[1] = 0;		x[2] = 10;		x[3] = 0;	
+	
 	P[0][0] = 10;	P[0][1] = 0;	P[0][2] = 0;	P[0][3] = 0;	
 	P[1][0] = 0;	P[1][1] = 10;	P[1][2] = 0;	P[1][3] = 0;
 	P[2][0] = 0;	P[2][1] = 0;	P[2][2] = 10;	P[2][3] = 0;	
@@ -177,11 +155,19 @@ void initMatrices(float dt, float P[4][4], float A[4][4], float H[2][4], float R
 	
 	R[0][0] = 1;	R[0][1] = 0;		
 	R[1][0] = 0;	R[1][1] = 1;
+	
+	Q[0][0] = 0.25 * powf(dt, 4);	Q[0][1] = 0.25 * powf(dt, 4);	Q[0][2] = 0.5 * powf(dt, 3);	Q[0][3] = 0.5 * powf(dt, 3);	
+	Q[1][0] = 0.25 * powf(dt, 4);	Q[1][1] = 0.25 * powf(dt, 4);	Q[1][2] = 0.5 * powf(dt, 3);	Q[1][3] = 0.5 * powf(dt, 3);
+	Q[2][0] = 0.5 * powf(dt, 3);	Q[2][1] = 0.5 * powf(dt, 3);	Q[2][2] = powf(dt, 2);	Q[2][3] = powf(dt, 2);
+	Q[3][0] = 0.5 * powf(dt, 3);	Q[3][1] = 0.5 * powf(dt, 3);	Q[3][2] = powf(dt, 2);	Q[3][3] = powf(dt, 2);
+	
+	I[0][0] = 1;	I[0][1] = 0;	I[0][2] = 0;	I[0][3] = 0;	
+	I[1][0] = 0;	I[1][1] = 1;	I[1][2] = 0;	I[1][3] = 0;
+	I[2][0] = 0;	I[2][1] = 0;	I[2][2] = 1;	I[2][3] = 0;
+	I[3][0] = 0;	I[3][1] = 0;	I[3][2] = 0;	I[3][3] = 1;
 }
 
-/************************************************************************************************/
 /************************************* Random number generator **********************************/
-/************************************************************************************************/
 float box_muller(float m, float s)	
 {				        			
 	float x1, x2, w, y1;
@@ -241,9 +227,7 @@ for (iVal = 0; iVal < numVals; iVal++)
 } 
 */
 
-/************************************************************************************************/
 /************************************* Print functions ******************************************/
-/************************************************************************************************/
 void showFloatMatrix(int N, int M, float array[N][M])
 {
 	int n, m;
@@ -265,9 +249,7 @@ void showFloatArray(int N, float array[])
 	printf("\n");
 }
 
-/************************************************************************************************/
 /************************************* Matrix and vector calculations ***************************/
-/************************************************************************************************/
 void multiplyMatrix_NN_NN_NN(int N, float mat1[][N], float mat2[][N], float res[][N]) 
 { 
     int n1, n2, n3; 
@@ -390,9 +372,7 @@ void subtractMatrixFromMatrix(int N, int M, float matrix1[N][M],  float matrix2[
 	}
 }
 
-/************************************************************************************************/
 /************************************* Matrix inverse calculations ******************************/
-/************************************************************************************************/
 void cofactor(float a[2][2],float d[2][2],float n,float determinate){
 	float b[2][2],c[2][2];
 	int l,h,m,k,i,j;

@@ -2,47 +2,36 @@
 #define KALMAN_FILTER_H
 
 /************************************************************************************************/
-/************************************************************************************************/
 /************************************* Function declarations ************************************/
 /************************************************************************************************/
-/************************************************************************************************/
 
-/************************************************************************************************/
 /************************************* Main *****************************************************/
-/************************************************************************************************/
+/* Main function */
 int main(void);
 
-/************************************************************************************************/
 /************************************* Fill measurement matrix with random vars *****************/
-/************************************************************************************************/
+/* Fills given measurement matrix with gaussian measurement values */
 void fillMeasurementMatrix(float meanX, float stddevX, float meanY, float stddevY, int numVars, int numVals, float measurementsVel[numVars][numVals]);
 
-/************************************************************************************************/
 /************************************* Init matrices ********************************************/
-/************************************************************************************************/
-void initMatrices(float dt, float P[4][4], float A[4][4], float H[2][4], float R[2][2], float Q[4][4], float I[4][4]);
+/* Initialize matrices for start values */
+void initMatrices(float dt, float x[4], float P[4][4], float A[4][4], float H[2][4], float R[2][2], float Q[4][4], float I[4][4]);
 
-/************************************************************************************************/
 /************************************* Random number generator **********************************/
-/************************************************************************************************/
 /* Normal random variate generator (box muller method), taken from ftp://ftp.taygeta.com/pub/c/boxmuller.c */
 float box_muller(float m, float s);
 
 /* Alternative method that doesn't use trigonometric functions. Might be a bit more performant. Taken from https://de.wikipedia.org/wiki/Polar-Methode#C */
 void polar(float *x1, float *x2);
 
-/************************************************************************************************/
 /************************************* Print functions ******************************************/
-/************************************************************************************************/
 /* Print function for float array */
 void showFloatArray(int size, float array[]);
 
 /* Print function for float matrix */
 void showFloatMatrix(int N, int M, float array[N][M]);
 
-/************************************************************************************************/
 /************************************* Matrix and vector calculations ***************************/
-/************************************************************************************************/
 /* Multiply matrices. Both matrixes have size [N][N], resulting matrix too */
 void multiplyMatrix_NN_NN_NN(int N, float mat1[][N], float mat2[][N], float res[][N]);
 
@@ -73,9 +62,7 @@ void subtractMatrixFromMatrix(int N, int M, float matrix1[N][M],  float matrix2[
 /* Transpose Matrix: matrix2[i][j] = matrix1[j][i] [N] may be equal to [M]*/
 void transposeMatrix_NM_MN(int N, int M, float matrix1[N][M], float matrix2[M][N]);
 
-/************************************************************************************************/
 /************************************* Matrix inverse calculations ******************************/
-/************************************************************************************************/
 /* Functions for inverse matrix calculation, taken from: https://github.com/md-amanalikhani/Inverse-matrix/blob/master/Inverse-matrix.c
    For now, only works for 2*2 matrix! */
    
@@ -95,9 +82,7 @@ void transpose(float c[2][2], float d[2][2], float n, float det);
 void minor(float b[2][2], float a[2][2], int i, int n);
 
 /************************************************************************************************/
-/************************************************************************************************/
 /************************************* Useful shortcuts (defines) *******************************/
-/************************************************************************************************/
 /************************************************************************************************/
 /* Get length of Matrix / Array */
 #define MATRIX_LEN1(matrix) (sizeof((matrix))/sizeof((matrix)[0][0]))/(sizeof((matrix)[0])/sizeof((matrix)[0][0]))
