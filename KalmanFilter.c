@@ -2,8 +2,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
-#include "KalmanFilter.h"
 #include <time.h>
+#include "KalmanFilter.h"
 
 /************************************************************************************************/
 /************************************************************************************************/
@@ -16,61 +16,38 @@
 /************************************************************************************************/
 int main(void)
 {		
-	clock_t start, end;
-    double cpu_time_used;
-     
 	int iVal;
 	float X, Y; 
-	const numVals = 100;
-	float measurementsVel[2][numVals];					// Artificial Measurement values. Index 1: x direction, Index 2: y direction
-	int dt = 1;												// Timestep
+	const int numVals = 100;
+	float measurementsVel[2][numVals];					/* Artificial Measurement values. Index 1: position in x direction, Index 2: y direction */
+	int dt = 1;											/* Timestep in sec */
 	
 	float meanX = 10;
 	float stddevX = 2;
 	float meanY = 0;
 	float stddevY = 0.05;
 	
-	srand(time(NULL));									// Get "real" random numbers http://users.wpi.edu/~bpwiselybabu/2012/02/07/generating-white-gaussian-noise/
+	srand(time(NULL));									/* Get "real" random numbers */
 	
-	for (iVal = 0; iVal < numVals; iVal++)
-	{
-		// measurementsVel[0][iVal] = (((float)rand()) / ((float)RAND_MAX) * 6) + 7;		// NOT GAUSSIAN!! Completely random number 7 - 13
-		// measurementsVel[1][iVal] = 0;													// Just simply 0
-		measurementsVel[0][iVal] = box_muller(meanX, stddevX);			// Gaussian distributed random number for x measurements
-		measurementsVel[1][iVal] = box_muller(meanY, stddevY);			// ... y measurements
-	}								// Get "real" random numbers http://users.wpi.edu/~bpwiselybabu/2012/02/07/generating-white-gaussian-noise/
-	
+	fillMeasurementMatrix(meanX, stddevX, meanY, stddevY, MATRIX_LEN1(measurementsVel), MATRIX_LEN2(measurementsVel), measurementsVel);
 	
 	/* Initial matrix states */
-	float x[4] = {0, 0, 10, 0};							// state vector: x, y, x', y'
+	float x[4] = {0, 0, 10, 0};							/* state vector: x, y, x', y' */
 	
-	float P[4][4];										// Initial uncertainty
-	P[0][0] = 10;	P[0][1] = 0;	P[0][2] = 0;	P[0][3] = 0;	
-	P[1][0] = 0;	P[1][1] = 10;	P[1][2] = 0;	P[1][3] = 0;
-	P[2][0] = 0;	P[2][1] = 0;	P[2][2] = 10;	P[2][3] = 0;	
-	P[3][0] = 0;	P[3][1] = 0;	P[3][2] = 0;	P[3][3] = 10;
+	float P[4][4];										/* Matrix for covariances betweens variables */
+	float A[4][4];										/* Transition Matrix */
+	float H[2][4];										/* Measurement Fct (How sensor values are converted) */
+	float R[2][2];										/* Measurement noise covariance (low stddev of meas. values: This can be low -> trust measured values MORE). If too high, the filter starts interpreting */	
+	float Q[4][4];										/* Process covariance matrix */
+	float I[4][4];										/* Identity Matrix */
 	
-	float A[4][4];										// Transition Matrix
-	A[0][0] = 1;	A[0][1] = 0;	A[0][2] = dt;	A[0][3] = 0;	
-	A[1][0] = 0;	A[1][1] = 1;	A[1][2] = 0;	A[1][3] = dt;
-	A[2][0] = 0;	A[2][1] = 0;	A[2][2] = 1;	A[2][3] = 0;	
-	A[3][0] = 0;	A[3][1] = 0;	A[3][2] = 0;	A[3][3] = 1;
+	initMatrices(dt, P, A, H, R, Q, I);
 	
-	float H[2][4];										// Measurement Fct (How sensor values are converted)
-	H[0][0] = 0;	H[0][1] = 0;	H[0][2] = 1;	H[0][3] = 0;	
-	H[1][0] = 0;	H[1][1] = 0;	H[1][2] = 0;	H[1][3] = 1;
-	
-	float R[2][2];										// Measurement noise covariance (low stddev of meas. values: This can be low -> trust measured values MORE). If too high, he starts interpreting
-	R[0][0] = 1;	R[0][1] = 0;		
-	R[1][0] = 0;	R[1][1] = 1;
-	
-	float Q[4][4];										// Initial uncertainty
 	Q[0][0] = 0.25 * powf(dt, 4);	Q[0][1] = 0.25 * powf(dt, 4);	Q[0][2] = 0.5 * powf(dt, 3);	Q[0][3] = 0.5 * powf(dt, 3);	
 	Q[1][0] = 0.25 * powf(dt, 4);	Q[1][1] = 0.25 * powf(dt, 4);	Q[1][2] = 0.5 * powf(dt, 3);	Q[1][3] = 0.5 * powf(dt, 3);
 	Q[2][0] = 0.5 * powf(dt, 3);	Q[2][1] = 0.5 * powf(dt, 3);	Q[2][2] = powf(dt, 2);	Q[2][3] = powf(dt, 2);
 	Q[3][0] = 0.5 * powf(dt, 3);	Q[3][1] = 0.5 * powf(dt, 3);	Q[3][2] = powf(dt, 2);	Q[3][3] = powf(dt, 2);
 	
-	float I[4][4];										// Identity Matrix
 	I[0][0] = 1;	I[0][1] = 0;	I[0][2] = 0;	I[0][3] = 0;	
 	I[1][0] = 0;	I[1][1] = 1;	I[1][2] = 0;	I[1][3] = 0;
 	I[2][0] = 0;	I[2][1] = 0;	I[2][2] = 1;	I[2][3] = 0;
@@ -98,7 +75,7 @@ int main(void)
 	
 	FILE *f = fopen("out.txt", "w");					/* Define file handle */
 	
-	FILE *gnuplot = popen("gnuplot", "w");				/* Define gnuplot handle: https://stackoverflow.com/questions/14311640/how-to-plot-data-by-c-program */
+	FILE *gnuplot = popen("gnuplot -persistent", "w");				/* Define gnuplot handle: https://stackoverflow.com/questions/14311640/how-to-plot-data-by-c-program */
 	fprintf(gnuplot, "plot '-'\n");
 	
 	for (iVal = 0; iVal < numVals; iVal++)				/* May be overwritten for debug purposes */
@@ -158,10 +135,48 @@ int main(void)
 	/* Properly finish file handlung */
 	fclose(f);
 	
-	/* pause the output so user can see the values and gnuplot won't close*/
-	system("pause");	
+	/* Pause the output so user can see the values and gnuplot won't close*/
+	/* Comment this one out if you need to stop after each run. Can't see gnuplot then. */
+	// system("pause");	
 	
 	return 0;
+}
+
+/************************************************************************************************/
+/************************************* Fill Measurement Matrix **********************************/
+/************************************************************************************************/
+void fillMeasurementMatrix(float meanX, float stddevX, float meanY, float stddevY, int numVars, int numVals, float measurementsVel[numVars][numVals])
+{	
+	int iVal;
+	for (iVal = 0; iVal < numVals; iVal++)
+	{
+		// measurementsVel[0][iVal] = (((float)rand()) / ((float)RAND_MAX) * 6) + 7;		// NOT GAUSSIAN!! Completely random number 7 - 13
+		// measurementsVel[1][iVal] = 0;													// Just simply 0
+		measurementsVel[0][iVal] = box_muller(meanX, stddevX);								// Gaussian distributed random number for x measurements
+		measurementsVel[1][iVal] = box_muller(meanY, stddevY);								// ... y measurements
+	}	
+}
+
+/************************************************************************************************/
+/************************************* Init matrices ********************************************/
+/************************************************************************************************/
+void initMatrices(float dt, float P[4][4], float A[4][4], float H[2][4], float R[2][2], float Q[4][4], float I[4][4])
+{					
+	P[0][0] = 10;	P[0][1] = 0;	P[0][2] = 0;	P[0][3] = 0;	
+	P[1][0] = 0;	P[1][1] = 10;	P[1][2] = 0;	P[1][3] = 0;
+	P[2][0] = 0;	P[2][1] = 0;	P[2][2] = 10;	P[2][3] = 0;	
+	P[3][0] = 0;	P[3][1] = 0;	P[3][2] = 0;	P[3][3] = 10;
+										
+	A[0][0] = 1;	A[0][1] = 0;	A[0][2] = dt;	A[0][3] = 0;	
+	A[1][0] = 0;	A[1][1] = 1;	A[1][2] = 0;	A[1][3] = dt;
+	A[2][0] = 0;	A[2][1] = 0;	A[2][2] = 1;	A[2][3] = 0;	
+	A[3][0] = 0;	A[3][1] = 0;	A[3][2] = 0;	A[3][3] = 1;
+										
+	H[0][0] = 0;	H[0][1] = 0;	H[0][2] = 1;	H[0][3] = 0;	
+	H[1][0] = 0;	H[1][1] = 0;	H[1][2] = 0;	H[1][3] = 1;
+	
+	R[0][0] = 1;	R[0][1] = 0;		
+	R[1][0] = 0;	R[1][1] = 1;
 }
 
 /************************************************************************************************/
