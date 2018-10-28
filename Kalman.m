@@ -60,4 +60,4 @@ for n=1:length(measurements)
     var(n) = P(3,3);
 end
 
-plot(1:100,vMeas,1:100,vEstim,1:100,var,1:100,X(:,3));
+plot(1:100,vMeas,1:100,vEstim,1:100,var);
