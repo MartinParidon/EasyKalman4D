@@ -1,3 +1,59 @@
+THIS FILE CONTAINS DEAD CODE THAT MIGHT BE USEFUL SO IT WAS TO PRECIOUS TO THROW AWAY
+
+
+
+
+
+
+
+		/* measurementsVel[0][iVal] = (((float)rand()) / ((float)RAND_MAX) * 6) + 7; */		/* NOT GAUSSIAN!! Completely random number 7 - 13 */
+		/* measurementsVel[1][iVal] = 0; */													/* Just simply 0 */
+
+
+		
+
+/* Alternative method that doesn't use trigonometric functions. Might be a bit more performant. Taken from https://de.wikipedia.org/wiki/Polar-Methode#C */
+/* void polar(float *x1, float *x2); */
+
+
+		
+/* NOT USED */
+/*
+void polar(float *x1, float *x2)
+{
+   float u, v, q, p;
+
+   do {
+      u = 2.0 * (((float)rand()) / ((float)RAND_MAX)) - 1;
+      v = 2.0 * (((float)rand()) / ((float)RAND_MAX)) - 1;
+      q  = u * u + v * v;
+   } while (q <= 0.0 || q >= 1.0);
+
+   p = sqrt(-2 * log(q) / q);
+   *x1 = u * p;
+   *x2 = v * p;
+}
+*/
+
+
+
+/* Debug: Could be implemented like this. Could be slightly more efficient, but a bit less easy in implementation
+for (iVal = 0; iVal < numVals - 1; iVal+=2)
+{
+	polar(&X, &Y);
+	PRINTFLOAT((X*1+10))
+	PRINTFLOAT((Y*1+10))
+	measurementsVel[0][iVal] = X*stddevX+meanX;
+	measurementsVel[0][iVal+1] = Y*stddevX+meanX;
+}
+
+for (iVal = 0; iVal < numVals; iVal++)
+{
+	PRINTFLOAT(measurementsVel[0][iVal])
+} 
+*/
+
+
 
 	srand(time(NULL));
 	int i, j;
@@ -12,9 +68,14 @@
 		PRINTFLOAT(vals_gauss[1][i])
 	}
 	
+	
+	
 	insertionSort(vals_gauss[1], vals_gauss[0], SIZEOFARRAY(vals_gauss[0]));
 	SHOWFLOATARRAY(vals_gauss[0])
 	SHOWFLOATARRAY(vals_gauss[1])
+	
+	
+	
 	
 	float vals[SIZE];
 	j = 0;

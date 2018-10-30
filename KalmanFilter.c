@@ -127,8 +127,6 @@ void fillMeasurementMatrix(float meanX, float stddevX, float meanY, float stddev
 	int iVal;
 	for (iVal = 0; iVal < numVals; iVal++)
 	{
-		/* measurementsVel[0][iVal] = (((float)rand()) / ((float)RAND_MAX) * 6) + 7; */		/* NOT GAUSSIAN!! Completely random number 7 - 13 */
-		/* measurementsVel[1][iVal] = 0; */													/* Just simply 0 */
 		measurementsVel[0][iVal] = box_muller(meanX, stddevX);								/* Gaussian distributed random number for x measurements */
 		measurementsVel[1][iVal] = box_muller(meanY, stddevY);								/* ... y measurements */
 	}	
@@ -194,40 +192,6 @@ float box_muller(float m, float s)
 
 	return( m + y1 * s );
 }
-
-/* NOT USED */
-/*
-void polar(float *x1, float *x2)
-{
-   float u, v, q, p;
-
-   do {
-      u = 2.0 * (((float)rand()) / ((float)RAND_MAX)) - 1;
-      v = 2.0 * (((float)rand()) / ((float)RAND_MAX)) - 1;
-      q  = u * u + v * v;
-   } while (q <= 0.0 || q >= 1.0);
-
-   p = sqrt(-2 * log(q) / q);
-   *x1 = u * p;
-   *x2 = v * p;
-}
-*/
-
-/* Debug: Could be implemented like this. Could be slightly more efficient, but a bit less easy in implementation
-for (iVal = 0; iVal < numVals - 1; iVal+=2)
-{
-	polar(&X, &Y);
-	PRINTFLOAT((X*1+10))
-	PRINTFLOAT((Y*1+10))
-	measurementsVel[0][iVal] = X*stddevX+meanX;
-	measurementsVel[0][iVal+1] = Y*stddevX+meanX;
-}
-
-for (iVal = 0; iVal < numVals; iVal++)
-{
-	PRINTFLOAT(measurementsVel[0][iVal])
-} 
-*/
 
 /************************************* Print functions ******************************************/
 void showFloatMatrix(int N, int M, float array[N][M])

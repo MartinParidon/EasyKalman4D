@@ -21,9 +21,6 @@ void initMatrices(float dt, float x[4], float P[4][4], float A[4][4], float H[2]
 /* Normal random variate generator (box muller method), taken from ftp://ftp.taygeta.com/pub/c/boxmuller.c */
 float box_muller(float m, float s);
 
-/* Alternative method that doesn't use trigonometric functions. Might be a bit more performant. Taken from https://de.wikipedia.org/wiki/Polar-Methode#C */
-/* void polar(float *x1, float *x2); */
-
 /************************************* Print functions ******************************************/
 /* Print function for float array */
 void showFloatArray(int size, float array[]);
