@@ -22,7 +22,7 @@ void initMatrices(float dt, float x[4], float P[4][4], float A[4][4], float H[2]
 float box_muller(float m, float s);
 
 /* Alternative method that doesn't use trigonometric functions. Might be a bit more performant. Taken from https://de.wikipedia.org/wiki/Polar-Methode#C */
-void polar(float *x1, float *x2);
+/* void polar(float *x1, float *x2); */
 
 /************************************* Print functions ******************************************/
 /* Print function for float array */
@@ -33,7 +33,7 @@ void showFloatMatrix(int N, int M, float array[N][M]);
 
 /************************************* Matrix and vector calculations ***************************/
 /* Multiply matrices. Both matrixes have size [N][N], resulting matrix too */
-void multiplyMatrix_NN_NN_NN(int N, float mat1[][N], float mat2[][N], float res[][N]);
+void multiplyMatrix_NN_NN_NN(int N, float mat1[N][N], float mat2[N][N], float res[N][N]);
 
 /* Multiply matrices. Matrix 1: [N][M], Matrix 2: [M][N], Resulting Matrix: [N][N] */
 void multiplyMatrix_NM_MN_NN(int N, int M, float mat1[N][M], float mat2[M][N], float res[N][N]);
@@ -45,22 +45,23 @@ void multiplyMatrix_NN_NM_NM(int N, int M, float mat1[N][N], float mat2[N][M], f
 void multiplyMatrix_MN_NN_MN(int M, int N, float mat1[M][N], float mat2[N][N], float res[M][N]);
 
 /* Multiply Matrix with vector. [N][M], Vector in: [M], Vector out: [N]. [N] may be equal to [M] */
-void multiplyMatrixWithVector_NM_M_N(int N, int M, float matrix[N][M],  float vectorIn[M], float vectorOut[N]);
-
-/* Subtracts one vector from another one. Both have same size */
-void subtractVectorFromVector(int size, float vector1[size], float vector2[size], float erg[size]);
-
-/* Adds two vector with same sizes */
-void addVectors(int size, float vector1[size], float vector2[size], float erg[size]);
-
-/* Adds two matrices with same sizes */
-void addMatrices(int N, int M, float matrix1[N][M], float matrix2[N][M], float erg[N][M]);
-
-/* Subtracts same sized matrices from one another */
-void subtractMatrixFromMatrix(int N, int M, float matrix1[N][M],  float matrix2[N][M], float erg[N][M]);
+// void multiplyMatrixWithVector_NM_M_N(int N, int M, float matrix[N][M],  float vectorIn[M], float vectorOut[N]);
+void multiplyMatrixWithVector_NM_M_N(int N, int M, float mat[N][M],  float vec[M], float res[N]);
 
 /* Transpose Matrix: matrix2[i][j] = matrix1[j][i] [N] may be equal to [M]*/
-void transposeMatrix_NM_MN(int N, int M, float matrix1[N][M], float matrix2[M][N]);
+void transposeMatrix_NM_MN(int N, int M, float mat1[N][M],  float mat2[M][N]);
+
+/* Subtracts one vector from another one. Both have same size */
+void subtractVectorFromVector(int N, float vec1[N], float vec2[N], float res[N]);
+
+/* Adds two vector with same sizes */
+void addVectors(int N, float vec1[N], float vec2[N], float res[N]);
+
+/* Adds two matrices with same sizes */
+void addMatrices(int N, int M, float mat1[N][M],  float mat2[N][M], float res[N][M]);
+
+/* Subtracts same sized matrices from one another */
+void subtractMatrixFromMatrix(int N, int M, float mat1[N][M],  float mat2[N][M], float res[N][M]);
 
 /************************************* Matrix inverse calculations ******************************/
 /* Functions for inverse matrix calculation, taken from: https://github.com/md-amanalikhani/Inverse-matrix/blob/master/Inverse-matrix.c

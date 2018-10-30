@@ -12,8 +12,6 @@
 /************************************* Main *****************************************************/
 int main(void)
 {		
-	int iVal;
-	float X, Y; 
 	const int numVals = 100;
 	float measurementsVel[2][numVals];					/* Artificial Measurement values. Index 1: position in x direction, Index 2: y direction */
 	int dt = 1;											/* Timestep in sec */
@@ -63,7 +61,7 @@ int main(void)
 	FILE *gnuplot = popen("gnuplot -persistent", "w");  /* Define gnuplot handle: https://stackoverflow.com/questions/14311640/how-to-plot-data-by-c-program */
 	fprintf(gnuplot, "plot '-'\n");
 	
-	for (iVal = 0; iVal < numVals; iVal++)				/* May be overwritten for debug purposes */
+	for (int iVal = 0; iVal < numVals; iVal++)				/* May be overwritten for debug purposes */
 	{
 		/* Prediction */
 		/* x=A*x */
@@ -197,6 +195,8 @@ float box_muller(float m, float s)
 	return( m + y1 * s );
 }
 
+/* NOT USED */
+/*
 void polar(float *x1, float *x2)
 {
    float u, v, q, p;
@@ -211,6 +211,7 @@ void polar(float *x1, float *x2)
    *x1 = u * p;
    *x2 = v * p;
 }
+*/
 
 /* Debug: Could be implemented like this. Could be slightly more efficient, but a bit less easy in implementation
 for (iVal = 0; iVal < numVals - 1; iVal+=2)
@@ -251,14 +252,14 @@ void showFloatArray(int N, float array[])
 }
 
 /************************************* Matrix and vector calculations ***************************/
-void multiplyMatrix_NN_NN_NN(int N, float mat1[][N], float mat2[][N], float res[][N]) 
+void multiplyMatrix_NN_NN_NN(int N, float mat1[N][N], float mat2[N][N], float res[N][N]) 
 { 
     int n1, n2, n3; 
+	memset(res, 0, sizeof(float)*N*N);
     for (n1 = 0; n1 < N; n1++) 
     { 
         for (n2 = 0; n2 < N; n2++) 
         { 
-            res[n1][n2] = 0; 
             for (n3 = 0; n3 < N; n3++) 
                 res[n1][n2] += mat1[n1][n3]*mat2[n3][n2]; 
         } 
@@ -268,11 +269,11 @@ void multiplyMatrix_NN_NN_NN(int N, float mat1[][N], float mat2[][N], float res[
 void multiplyMatrix_NM_MN_NN(int N, int M, float mat1[N][M], float mat2[M][N], float res[N][N]) 
 { 
     int n1, n2, m; 
+	memset(res, 0, sizeof(float)*N*N);
     for (n1 = 0; n1 < N; n1++) 
     { 
         for (n2 = 0; n2 < N; n2++) 
         { 
-            res[n1][n2] = 0; 
             for (m = 0; m < M; m++) 
                 res[n1][n2] += mat1[n1][m]*mat2[m][n2]; 
         } 
@@ -282,11 +283,11 @@ void multiplyMatrix_NM_MN_NN(int N, int M, float mat1[N][M], float mat2[M][N], f
 void multiplyMatrix_NN_NM_NM(int N, int M, float mat1[N][N], float mat2[N][M], float res[N][M]) 
 { 
     int n1, m, n2; 
+	memset(res, 0, sizeof(float)*N*M);
     for (n1 = 0; n1 < N; n1++) 
     { 
         for (m = 0; m < M; m++) 
         { 
-            res[n1][m] = 0; 
             for (n2 = 0; n2 < N; n2++) 
                 res[n1][m] += mat1[n1][n2]*mat2[n2][m]; 
         } 
@@ -296,79 +297,80 @@ void multiplyMatrix_NN_NM_NM(int N, int M, float mat1[N][N], float mat2[N][M], f
 void multiplyMatrix_MN_NN_MN(int M, int N, float mat1[M][N], float mat2[N][N], float res[M][N]) 
 { 
     int m, n1, n2; 
+	memset(res, 0, sizeof(float)*M*N);
     for (m = 0; m < M; m++) 
     { 
         for (n1 = 0; n1 < N; n1++) 
         { 
-            res[m][n1] = 0; 
             for (n2 = 0; n2 < N; n2++) 
                 res[m][n1] += mat1[m][n2]*mat2[n2][n1]; 
         } 
     } 
 } 
 
-void multiplyMatrixWithVector_NM_M_N(int N, int M, float matrix[N][M],  float vectorIn[M], float vectorOut[N]) 
+void multiplyMatrixWithVector_NM_M_N(int N, int M, float mat[N][M],  float vec[M], float res[N]) 
 { 
 	int n, m;
+	float sumProd;
 	for (n = 0; n < N; n++)
 	{
-		float sumProdMV = 0;
+		sumProd = 0;
 		for (m = 0; m < M; m++)
 		{
-			sumProdMV += matrix[n][m] * vectorIn[m];
+			sumProd += mat[n][m] * vec[m];
 		}
-		vectorOut[n] = sumProdMV;
+		res[n] = sumProd;
 	} 
 } 
 
-void transposeMatrix_NM_MN(int N, int M, float matrix1[N][M],  float matrix2[M][N])
+void transposeMatrix_NM_MN(int N, int M, float mat1[N][M],  float mat2[M][N])
 {
 	int n, m;
 	for (n = 0; n < N; n++)
 	{
 		for (m = 0; m < M; m++)
-			matrix2[m][n] = matrix1[n][m];
+			mat2[m][n] = mat1[n][m];
 	}
 }
 
-void addMatrices(int N, int M, float matrix1[N][M],  float matrix2[N][M], float erg[N][M])
+void subtractVectorFromVector(int N, float vec1[N], float vec2[N], float res[N])
+{
+	int n;
+	for (n = 0; n < N; n++) 
+	{
+		res[n] = vec1[n] - vec2[n];
+	}
+}
+
+void addVectors(int N, float vec1[N], float vec2[N], float res[N])
+{
+	int n;
+	for (n = 0; n < N; n++) 
+	{
+		res[n] = vec1[n] + vec2[n];
+	}
+}
+
+void addMatrices(int N, int M, float mat1[N][M],  float mat2[N][M], float res[N][M])
 {
 	int n, m;
 	for (n = 0; n < N; n++) 
 	{
 		for (m = 0 ; m < M; m++) 
 		{
-			 erg[n][m] = matrix1[n][m] + matrix2[n][m];
+			 res[n][m] = mat1[n][m] + mat2[n][m];
 		}
 	}
 }
 
-void subtractVectorFromVector(int N, float vector1[N], float vector2[N], float erg[N])
-{
-	int n;
-	for (n = 0; n < N; n++) 
-	{
-		erg[n] = vector1[n] - vector2[n];
-	}
-}
-
-void addVectors(int N, float vector1[N], float vector2[N], float erg[N])
-{
-	int n;
-	for (n = 0; n < N; n++) 
-	{
-		erg[n] = vector1[n] + vector2[n];
-	}
-}
-
-void subtractMatrixFromMatrix(int N, int M, float matrix1[N][M],  float matrix2[N][M], float erg[N][M])
+void subtractMatrixFromMatrix(int N, int M, float mat1[N][M],  float mat2[N][M], float res[N][M])
 {
 	int n, m;
 	for (n = 0; n < N; n++) 
 	{
 		for (m = 0 ; m < M; m++) 
 		{
-			 erg[n][m] = matrix1[n][m] - matrix2[n][m];
+			 res[n][m] = mat1[n][m] - mat2[n][m];
 		}
 	}
 }
