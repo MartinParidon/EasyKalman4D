@@ -106,8 +106,9 @@ int main(void)
 		WRITEFLOATARRAYTOFILETAB(f,x)
 		WRITEENTERTOFILE(f)
 		
-		fprintf(gnuplot, "%d %g\n", iVal, x[2]);		/* May be overwritten for debug purposes */
-														/* See and compare to Matlab: Z[0], x[2], P[2][2] */
+		// fprintf(gnuplot, "%d %g\n", iVal, x[2]);		/* May be overwritten for debug purposes */
+		// fprintf(gnuplot, "%d %g\n", iVal, Z[0]);		/* See and compare to Matlab: Z[0], x[2], P[2][2] */
+		fprintf(gnuplot, "%d %g\n", iVal, P[2][2]);
 		
 	}
 	
