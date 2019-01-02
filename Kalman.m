@@ -43,8 +43,8 @@ figure
 %
 for n=1:length(measurements)
     % Prediction
-    x=A*x;                  % Pr‰dizierter Zustand aus Bisherigem und System
-    P=A*P*A'+Q;             % Pr‰dizieren der Kovarianz
+    x=A*x;                  % Pr√§dizierter Zustand aus Bisherigem und System
+    P=A*P*A'+Q;             % Pr√§dizieren der Kovarianz
   
     % Correction
     Z=measurements(:,n);
@@ -61,3 +61,4 @@ for n=1:length(measurements)
 end
 
 plot(1:100,vMeas,1:100,vEstim,1:100,var);
+legend({'vMeas','vEstim','var'},'Location','best')
