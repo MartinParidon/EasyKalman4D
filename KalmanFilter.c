@@ -166,6 +166,12 @@ void initMatrices(float dt, float x[4], float P[4][4], float A[4][4], float H[2]
 }
 
 /************************************* Random number generator **********************************/
+/* KalmanFilter.c Implements the Polar form of the Box-Muller Transformation
+(c) Copyright 1994, Everett F. Carter Jr.
+    	Permission is granted by the author to use
+	this software for any application provided this
+	copyright notice is preserved.
+*/
 float box_muller(float m, float s)	
 {				        			
 	float x1, x2, w, y1;
